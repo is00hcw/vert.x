@@ -3352,6 +3352,43 @@ public class HttpTestClient extends TestClientBase {
       }
     });
   }
+
+  public void testSendFileDirectory() throws Exception {
+    AsyncResultHandler<HttpServer> handler = new AsyncResultHandler<HttpServer>() {
+      @Override
+      public void handle(AsyncResult<HttpServer> ar) {
+        tu.azzert(ar.succeeded());
+        client.getNow("some-uri", new Handler<HttpClientResponse>() {
+          public void handle(final HttpClientResponse response) {
+            // should not get any response
+            tu.azzert(false);
+          }
+        });
+      }
+    };
+
+    startServer(new Handler<HttpServerRequest>() {
+      public void handle(final HttpServerRequest req) {
+        vertx.fileSystem().mkdir("testdirectory", new Handler<AsyncResult<Void>>() {
+          @Override
+          public void handle(AsyncResult<Void> event) {
+            try {
+              req.response().sendFile("testdirectory");
+              tu.azzert(false);
+            } catch (IllegalArgumentException e) {
+              // expected
+              vertx.fileSystem().delete("testdirectory", new Handler<AsyncResult<Void>>() {
+                @Override
+                public void handle(AsyncResult<Void> event) {
+                  tu.testComplete();
+                }
+              });
+            }
+          }
+        });
+      }
+    }, handler);
+  }
 }
 
 

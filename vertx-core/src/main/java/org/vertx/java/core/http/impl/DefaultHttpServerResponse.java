@@ -333,6 +333,9 @@ public class DefaultHttpServerResponse implements HttpServerResponse {
     }
     checkWritten();
     File file = new File(PathAdjuster.adjust(vertx, filename));
+    if (file.isDirectory()) {
+      throw new IllegalArgumentException("filename must point to a file and not to a directory");
+    }
     if (!file.exists()) {
       if (notFoundResource != null) {
         setStatusCode(HttpResponseStatus.NOT_FOUND.code());
